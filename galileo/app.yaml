@@ -1,0 +1,36 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: galileo
+  labels:
+    app: galileo
+spec:
+  type: NodePort
+  selector:
+    app: galileo
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: galileo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: galileo
+  template:
+    metadata:
+      labels:
+        app: galileo
+        version: v1
+    spec:
+      containers:
+      - name: galileo
+        image: galileo
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
