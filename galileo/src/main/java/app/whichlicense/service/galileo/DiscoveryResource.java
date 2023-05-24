@@ -19,10 +19,7 @@ import com.whichlicense.metadata.seeker.MetadataMatch;
 import com.whichlicense.metadata.seeker.MetadataSeeker;
 import com.whichlicense.metadata.sourcing.MetadataSourceResolverProvider;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -62,11 +59,10 @@ public class DiscoveryResource {
         return seeker.globs().stream().map(glob -> createMatcher(glob, seeker, root));
     }
 
-    @GET
+    @POST
+    @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public SimpleSBOM endpoint(@QueryParam("url") String rawURL) throws MalformedURLException {
-        var inputPath = new URL(rawURL);
-
+    public SimpleSBOM endpoint(DiscoveryRequest request) {
         Logger SEEKER_LOGGER = getLogger("whichlicense.seeker");
         Logger MATCHES_LOGGER = getLogger("whichlicense.matches");
         Logger DISCOVERY_LOGGER = getLogger("whichlicense.discovery");
@@ -74,8 +70,8 @@ public class DiscoveryResource {
         Logger DEPENDENCIES_LOGGER = getLogger("whichlicense.dependencies");
         Logger IDENTIFICATION_LOGGER = getLogger("whichlicense.identification");
 
-        final var source = MetadataSourceResolverProvider.loadChain().resolve(inputPath)
-                .orElseThrow(() -> new UnsupportedSourceException(rawURL)).path();
+        final var source = MetadataSourceResolverProvider.loadChain().resolve(request.url())
+                .orElseThrow(() -> new UnsupportedSourceException(request.toString())).path();
 
         var seekers = ServiceLoader.load(MetadataSeeker.class);
         seekers.iterator().forEachRemaining(seeker -> SEEKER_LOGGER.finest("Registered "
