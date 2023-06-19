@@ -1,0 +1,43 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: spectra
+  labels:
+    app: spectra
+spec:
+  type: NodePort
+  selector:
+    app: spectra
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: spectra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spectra
+  template:
+    metadata:
+      labels:
+        app: spectra
+        version: v1
+    spec:
+      containers:
+      - name: spectra
+        image: ghcr.io/whichlicense/platform-microservices/spectra:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - name: docker-config
+            mountPath: /root/.docker/
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: github-docker-config

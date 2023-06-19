@@ -63,3 +63,6 @@ out/
 
 # SonarLint plugin
 .idea/sonarlint/
+
+#Other
+credentials.json

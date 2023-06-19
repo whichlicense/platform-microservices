@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 module whichlicense.service.spectra {
+    requires jakarta.ws.rs;
+    requires jakarta.cdi;
+    requires io.helidon.metrics;
     requires whichlicense.identity;
-    requires io.helidon.nima.http2.webserver;
 }

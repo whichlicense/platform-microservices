@@ -21,7 +21,7 @@ RUN echo "done!"
 
 FROM debian:bookworm-slim
 WORKDIR /helidon
-COPY --from=build /helidon/target/galileo-jri ./
+COPY --from=build /helidon/target/spectra-jri ./
 # RUN apt-get update && apt-get install -y ca-certificates
 ENTRYPOINT ["/bin/bash", "/helidon/bin/start"]
 EXPOSE 8080
