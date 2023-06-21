@@ -10,6 +10,7 @@ import app.whichlicense.service.galileo.exceptions.UnsupportedSourceException;
 import app.whichlicense.service.galileo.npm.NpmPackageLock;
 import app.whichlicense.service.galileo.simplesbom.SimpleDependency;
 import app.whichlicense.service.galileo.simplesbom.SimpleSBOM;
+import app.whichlicense.service.mesh.IdentityResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.whichlicense.integration.jackson.identity.WhichLicenseIdentityModule;
@@ -25,8 +26,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -45,7 +45,6 @@ import static app.whichlicense.service.galileo.simplesbom.DependencyScope.TEST;
 import static com.whichlicense.metadata.identification.license.HashingAlgorithm.GAOYA;
 import static com.whichlicense.metadata.seeker.MetadataSourceType.FILE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Optional.empty;
@@ -56,10 +55,9 @@ import static java.util.stream.Collectors.toSet;
 @Path("/discover")
 @RequestScoped
 public class DiscoveryResource {
-    private static final String SPECTRA_SERVICE_URL = "http://spectra/identity";
-
     @Inject
-    private Client client;
+    @RestClient
+    private IdentityResource identityResource;
 
     static Function<java.nio.file.Path, Optional<MetadataMatch>> createMatcher(String glob, MetadataSeeker seeker, java.nio.file.Path root) {
         var compiled = root.getFileSystem().getPathMatcher("glob:" + glob);
@@ -151,11 +149,11 @@ public class DiscoveryResource {
                         var name = entry.getKey().substring(entry.getKey().lastIndexOf("/") + 1);
                         var metadata = entry.getValue();
                         DEPENDENCIES_LOGGER.finest("Identified dependency " + name + "#" + metadata.version());
-                        var identity = Identity.fromHex(client.target(SPECTRA_SERVICE_URL).request(TEXT_PLAIN).get(String.class));
+                        var identity = Identity.fromHex(identityResource.generate());
                         return new SimpleDependency(name, metadata.version(), identity, metadata.license(), null, "library", metadata.dev() ? TEST : COMPILE, "npm", source.relativize(file).toString(), metadata.dependencies() == null ? Collections.emptyMap() : metadata.dependencies()); //also add the dev dependencies here in the future
                     }).collect(Collectors.partitioningBy(d -> directDependencyNames.contains(d.name())));
 
-                    var identity = Identity.fromHex(client.target(SPECTRA_SERVICE_URL).request(TEXT_PLAIN).get(String.class));
+                    var identity = Identity.fromHex(identityResource.generate());
                     var simpleSBOM = new SimpleSBOM(packageLock.name(), packageLock.version(), identity,
                             packageMetadata.license().toLowerCase(), null, discoveredLicense.map(LicenseMatch::license)
                             .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null),

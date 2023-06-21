@@ -7,6 +7,7 @@
 import com.whichlicense.metadata.seeker.MetadataSeeker;
 
 module whichlicense.service.galileo {
+    requires microprofile.rest.client.api;
     requires jakarta.cdi;
     requires jakarta.ws.rs;
     requires whichlicense.logging;
