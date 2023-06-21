@@ -34,10 +34,5 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
-        volumeMounts:
-          - name: docker-config
-            mountPath: /root/.docker/
-      volumes:
-        - name: docker-config
-          secret:
-            secretName: github-docker-config
+      imagePullSecrets:
+        - name: ghpat

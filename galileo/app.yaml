@@ -30,7 +30,9 @@ spec:
     spec:
       containers:
       - name: galileo
-        image: galileo
+        image: ghcr.io/whichlicense/platform-microservices/galileo:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
+      imagePullSecrets:
+        - name: ghpat
