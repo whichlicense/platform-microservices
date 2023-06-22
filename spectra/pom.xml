@@ -13,7 +13,7 @@
 
     <groupId>app.whichlicense.service</groupId>
     <artifactId>spectra</artifactId>
-    <version>0.7.8-SNAPSHOT</version>
+    <version>0.7.9-SNAPSHOT</version>
 
     <repositories>
         <repository>

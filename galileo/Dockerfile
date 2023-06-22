@@ -24,6 +24,6 @@ WORKDIR /helidon
 COPY --from=build /helidon/target/galileo.jar ./
 COPY --from=build /helidon/target/libs ./libs
 
-CMD ["java", "--enable-preview", "-jar", "galileo.jar"]
+CMD ["java", "--enable-preview", "--enable-native-access=ALL-UNNAMED", "-jar", "galileo.jar"]
 
 EXPOSE 8080
