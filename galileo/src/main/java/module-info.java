@@ -24,6 +24,7 @@ module whichlicense.service.galileo {
     requires whichlicense.seeker.gitmodules;
     requires whichlicense.seeker.gitrepo;
     requires whichlicense.seeker.rat;
+    requires whichlicense.identity;
     requires whichlicense.integration.jackson.identity;
     requires whichlicense.identification.license;
     requires whichlicense.identification.license.backend.panama;

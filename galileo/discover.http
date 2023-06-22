@@ -1,4 +1,4 @@
-POST http://localhost:8081/discover
+POST http://localhost:8082/discover
 Content-Type: application/json
 
 {
