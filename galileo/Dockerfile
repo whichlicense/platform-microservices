@@ -23,6 +23,6 @@ FROM debian:bookworm-slim
 WORKDIR /helidon
 COPY --from=build /helidon/target/galileo-jri ./
 # RUN apt-get update && apt-get install -y ca-certificates
-ENTRYPOINT ["/bin/bash", "/helidon/bin/start"]
+ENTRYPOINT ["/bin/bash", "/helidon/bin/start", " -Djavax.net.debug=ssl,handshake"]
 EXPOSE 8080
 EXPOSE 443
