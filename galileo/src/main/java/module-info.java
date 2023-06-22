@@ -26,8 +26,9 @@ module whichlicense.service.galileo {
     requires whichlicense.seeker.rat;
     requires whichlicense.identity;
     requires whichlicense.integration.jackson.identity;
+    requires whichlicense.configuration;
     requires whichlicense.identification.license;
-    requires whichlicense.identification.license.backend.panama;
+    requires whichlicense.identification.license.panama;
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.datatype.jsr310;
     opens app.whichlicense.service.galileo.npm to com.fasterxml.jackson.databind;

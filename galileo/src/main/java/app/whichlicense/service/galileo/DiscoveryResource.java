@@ -14,7 +14,7 @@ import app.whichlicense.service.mesh.IdentityResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.whichlicense.integration.jackson.identity.WhichLicenseIdentityModule;
-import com.whichlicense.metadata.identification.license.LicenseClassifier;
+import com.whichlicense.metadata.identification.license.LicenseIdentifier;
 import com.whichlicense.metadata.identification.license.LicenseMatch;
 import com.whichlicense.metadata.identity.Identity;
 import com.whichlicense.metadata.seeker.MetadataMatch;
@@ -42,7 +42,6 @@ import java.util.stream.StreamSupport;
 
 import static app.whichlicense.service.galileo.simplesbom.DependencyScope.COMPILE;
 import static app.whichlicense.service.galileo.simplesbom.DependencyScope.TEST;
-import static com.whichlicense.metadata.identification.license.HashingAlgorithm.GAOYA;
 import static com.whichlicense.metadata.seeker.MetadataSourceType.FILE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.time.Instant.now;
@@ -79,7 +78,7 @@ public class DiscoveryResource {
         Logger DEPENDENCIES_LOGGER = getLogger("whichlicense.dependencies");
         Logger IDENTIFICATION_LOGGER = getLogger("whichlicense.identification");
 
-        final var source = MetadataSourceResolverProvider.loadChain().resolve(request.url())
+        final var source = MetadataSourceResolverProvider.loadChain().resolve(request.url(), new ConfigurationStub())
                 .orElseThrow(() -> new UnsupportedSourceException(request.toString())).path();
 
         var seekers = ServiceLoader.load(MetadataSeeker.class);
@@ -123,11 +122,10 @@ public class DiscoveryResource {
         Optional<LicenseMatch> discoveredLicense = Optional.empty();
 
         for (var file : discoveredFiles) {
-            var classifier = LicenseClassifier.load();
             if (licenseFileGlob.matches(file)) {
                 IDENTIFICATION_LOGGER.finest("Identify LICENSE");
                 try {
-                    discoveredLicense = classifier.detectLicense(GAOYA, Files.readString(file));
+                    discoveredLicense = LicenseIdentifier.identifyLicense("gaoya", Files.readString(file));
                     IDENTIFICATION_LOGGER.finest(discoveredLicense.toString());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
