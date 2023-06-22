@@ -8,7 +8,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 @Path("/identity")
-@RegisterRestClient(baseUri = "http://spectra")
+@RegisterRestClient(baseUri = "http://spectra:8080")
 public interface IdentityResource {
     @GET
     @Produces(TEXT_PLAIN)

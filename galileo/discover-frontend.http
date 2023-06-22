@@ -1,6 +1,6 @@
-POST http://localhost:8080/discover
+POST http://localhost:8081/discover
 Content-Type: application/json
 
 {
-  "url": "https://github.com/whichlicense/frontend"
+  "url": "https://github.com/whichlicense/frontend/archive/refs/heads/main.zip"
 }
