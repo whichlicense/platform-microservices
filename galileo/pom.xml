@@ -13,7 +13,7 @@
 
     <groupId>app.whichlicense.service</groupId>
     <artifactId>galileo</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.8-SNAPSHOT</version>
 
     <repositories>
         <repository>
@@ -89,97 +89,97 @@
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>logging</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>problem</artifactId>
-            <version>0.2.1-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>sourcing</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.sourcing</groupId>
             <artifactId>github</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>identity</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>seeker</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>npm</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>yarn</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>license</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>notice</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>readme</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>rat</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>gitignore</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>gitattributes</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>gitmodules</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.seeker</groupId>
             <artifactId>gitrepo</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.whichlicense.jackson</groupId>
-            <artifactId>identity</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <groupId>com.whichlicense</groupId>
+            <artifactId>jackson-identity-integration</artifactId>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.whichlicense.identification</groupId>
-            <artifactId>license</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <groupId>com.whichlicense</groupId>
+            <artifactId>identification</artifactId>
+            <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.whichlicense.identification.license.backend</groupId>
+            <groupId>com.whichlicense.identification.license</groupId>
             <artifactId>panama</artifactId>
-            <version>0.2.1-SNAPSHOT</version>
+            <version>0.7.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
