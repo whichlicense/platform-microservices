@@ -21,25 +21,25 @@
    docker network inspect galaxy
    ```
 
-4. Run the `spectra` container, connecting it to the `galaxy` network and mapping port `8081`:
+4. Start the `spectra` container, connecting it to the `galaxy` network and mapping port `8081`:
 
    ```bash
    docker run --name spectra --network galaxy -p 8081:8080 ghcr.io/whichlicense/platform-microservices/spectra:0.8.0
    ```
 
-5. Run the `galileo` container, connecting it to the `galaxy` network and mapping port `8082`:
+5. Start the `galileo` container, connecting it to the `galaxy` network and mapping port `8082`:
 
    ```bash
    docker run --name galileo --network galaxy -p 8082:8080 ghcr.io/whichlicense/platform-microservices/galileo:0.8.0
    ```
 
-6. Run the `stellar` container, connecting it to the `galaxy` network and mapping port `8083`:
+6. Start the `stellar` container, connecting it to the `galaxy` network and mapping port `8083`:
 
    ```bash
    docker run --name stellar --network galaxy -p 8083:8080 ghcr.io/whichlicense/platform-microservices/stellar:0.8.0
    ```
 
-7. Run the `meteor` container, connecting it to the `galaxy` network and mapping port `8084`:
+7. Start the `meteor` container, connecting it to the `galaxy` network and mapping port `8084`:
 
    ```bash
    docker run --name meteor --network galaxy -p 8084:8080 ghcr.io/whichlicense/platform-microservices/meteor:0.8.0
