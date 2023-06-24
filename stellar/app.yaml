@@ -1,0 +1,38 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: stellar
+  labels:
+    app: stellar
+spec:
+  type: NodePort
+  selector:
+    app: stellar
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: stellar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stellar
+  template:
+    metadata:
+      labels:
+        app: stellar
+        version: v1
+    spec:
+      containers:
+      - name: stellar
+        image: ghcr.io/whichlicense/platform-microservices/stellar:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+        - name: ghpat

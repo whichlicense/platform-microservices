@@ -11,6 +11,7 @@ import app.whichlicense.service.galileo.npm.NpmPackageLock;
 import app.whichlicense.service.galileo.simplesbom.SimpleDependency;
 import app.whichlicense.service.galileo.simplesbom.SimpleSBOM;
 import app.whichlicense.service.mesh.IdentityResource;
+import app.whichlicense.service.mesh.LicenseIdentificationResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.whichlicense.integration.jackson.identity.WhichLicenseIdentityModule;
@@ -57,6 +58,9 @@ public class DiscoveryResource {
     @Inject
     @RestClient
     private IdentityResource identityResource;
+    @Inject
+    @RestClient
+    private LicenseIdentificationResource licenseIdentificationResource;
 
     static Function<java.nio.file.Path, Optional<MetadataMatch>> createMatcher(String glob, MetadataSeeker seeker, java.nio.file.Path root) {
         var compiled = root.getFileSystem().getPathMatcher("glob:" + glob);
@@ -70,13 +74,12 @@ public class DiscoveryResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public SimpleSBOM endpoint(DiscoveryRequest request) {
+    public SimpleSBOM endpoint(DiscoveryRequest request) throws IOException {
         Logger SEEKER_LOGGER = getLogger("whichlicense.seeker");
         Logger MATCHES_LOGGER = getLogger("whichlicense.matches");
         Logger DISCOVERY_LOGGER = getLogger("whichlicense.discovery");
         Logger EXTRACTING_LOGGER = getLogger("whichlicense.extracting");
         Logger DEPENDENCIES_LOGGER = getLogger("whichlicense.dependencies");
-        Logger IDENTIFICATION_LOGGER = getLogger("whichlicense.identification");
 
         final var source = MetadataSourceResolverProvider.loadChain().resolve(request.url(), new ConfigurationStub())
                 .orElseThrow(() -> new UnsupportedSourceException(request.toString())).path();
@@ -123,13 +126,7 @@ public class DiscoveryResource {
 
         for (var file : discoveredFiles) {
             if (licenseFileGlob.matches(file)) {
-                IDENTIFICATION_LOGGER.finest("Identify LICENSE");
-                try {
-                    discoveredLicense = LicenseIdentifier.identifyLicense("gaoya", Files.readString(file));
-                    IDENTIFICATION_LOGGER.finest(discoveredLicense.toString());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                discoveredLicense = Optional.of(licenseIdentificationResource.identify(Files.readString(file)));
             }
         }
 

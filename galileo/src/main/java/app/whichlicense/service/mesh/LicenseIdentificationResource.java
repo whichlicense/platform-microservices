@@ -6,17 +6,21 @@
  */
 package app.whichlicense.service.mesh;
 
-import jakarta.ws.rs.GET;
+import com.whichlicense.metadata.identification.license.LicenseMatch;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
-@RegisterRestClient(baseUri = "http://spectra:8080")
-public interface IdentityResource {
-    @GET
-    @Path("/identity")
-    @Produces(TEXT_PLAIN)
-    String generate();
+@RegisterRestClient(baseUri = "http://stellar:8080")
+public interface LicenseIdentificationResource {
+    @POST
+    @Path("/identify")
+    @Consumes(TEXT_PLAIN)
+    @Produces(APPLICATION_JSON)
+    LicenseMatch identify(String license);
 }

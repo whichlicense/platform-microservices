@@ -2,5 +2,5 @@ POST http://localhost:8082/discover
 Content-Type: application/json
 
 {
-  "url": "https://github.com/whichlicense/frontend"
+  "url": "https://github.com/whichlicense/frontend/archive/refs/heads/main.zip"
 }

@@ -18,7 +18,7 @@ import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 @Path("/identity")
 @RequestScoped
-public class SpectraResource {
+public class IdentityResource {
     private static final String IDENTITY_GETS_COUNTER_NAME = "identityGets";
     private static final String IDENTITY_GETS_COUNTER_DESCRIPTION = "Counts identity GET operations";
     private static final String GETS_TIMER_NAME = "identityGeneration";

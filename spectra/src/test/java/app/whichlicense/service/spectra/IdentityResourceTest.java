@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @HelidonTest
-class SpectraResourceTest {
+class IdentityResourceTest {
     @Inject
     private MetricRegistry registry;
     @Inject

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -12,7 +12,7 @@
     </parent>
 
     <groupId>app.whichlicense.service</groupId>
-    <artifactId>galileo</artifactId>
+    <artifactId>stellar</artifactId>
     <version>0.7.9-SNAPSHOT</version>
 
     <repositories>
@@ -30,14 +30,6 @@
         <dependency>
             <groupId>io.helidon.microprofile.bundles</groupId>
             <artifactId>helidon-microprofile-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.helidon.microprofile.rest-client</groupId>
-            <artifactId>helidon-microprofile-rest-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.microprofile.rest.client</groupId>
-            <artifactId>microprofile-rest-client-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.microprofile.metrics</groupId>
@@ -60,6 +52,10 @@
             <artifactId>helidon-microprofile-tracing</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.helidon.microprofile</groupId>
+            <artifactId>helidon-microprofile-fault-tolerance</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
@@ -73,10 +69,6 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>io.helidon.microprofile</groupId>
-            <artifactId>helidon-microprofile-fault-tolerance</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jboss</groupId>
             <artifactId>jandex</artifactId>
             <scope>runtime</scope>
@@ -88,93 +80,18 @@
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
-            <artifactId>logging</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense</groupId>
             <artifactId>problem</artifactId>
             <version>0.7.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense</groupId>
-            <artifactId>sourcing</artifactId>
-            <version>0.7.9-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.sourcing</groupId>
-            <artifactId>github</artifactId>
-            <version>0.7.9-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense</groupId>
-            <artifactId>identity</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense</groupId>
-            <artifactId>seeker</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>npm</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>yarn</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>license</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>notice</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>readme</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>rat</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>gitignore</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>gitattributes</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>gitmodules</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense.seeker</groupId>
-            <artifactId>gitrepo</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense</groupId>
-            <artifactId>jackson-identity-integration</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.whichlicense</groupId>
             <artifactId>identification</artifactId>
-            <version>0.7.6-SNAPSHOT</version>
+            <version>0.8.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.whichlicense.identification</groupId>
+            <artifactId>panama</artifactId>
+            <version>0.7.7-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
