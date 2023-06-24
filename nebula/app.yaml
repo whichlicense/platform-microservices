@@ -1,0 +1,38 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: nebula
+  labels:
+    app: nebula
+spec:
+  type: NodePort
+  selector:
+    app: nebula
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nebula
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nebula
+  template:
+    metadata:
+      labels:
+        app: nebula
+        version: v1
+    spec:
+      containers:
+      - name: nebula
+        image: ghcr.io/whichlicense/platform-microservices/nebula:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+        - name: ghpat
