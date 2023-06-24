@@ -50,7 +50,7 @@ public class LicenseIdentificationResource {
                     params, request.license());
             IDENTIFICATION_LOGGER.finest(discoveredLicenses.toString());
 
-            return ofMatchSet(request.algorithm(), params, discoveredLicenses);
+            return ofMatchSet(request.algorithm(), params, discoveredLicenses, request.license());
         } else {
             return null;
         }

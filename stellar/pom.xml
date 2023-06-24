@@ -86,7 +86,7 @@
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>identification</artifactId>
-            <version>0.8.4-SNAPSHOT</version>
+            <version>0.8.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.identification</groupId>
