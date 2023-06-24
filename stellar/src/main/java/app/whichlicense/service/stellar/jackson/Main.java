@@ -35,13 +35,13 @@ public class Main {
 
         System.out.println(mapper.readValue(serializedTrace, LicenseIdentificationPipelineStepTrace.class));
 
-        var testUpgradeToTrace = LicenseIdentificationPipelineTrace.ofMatchSet(algo, params, Set.of(testMatch));
+        var testUpgradeToTrace = LicenseIdentificationPipelineTrace.ofMatchSet(algo, params, Set.of(testMatch), "license");
         var serializedUpgradeToTrace = mapper.writeValueAsString(testUpgradeToTrace);
         System.out.println(serializedUpgradeToTrace);
 
         System.out.println(mapper.readValue(serializedUpgradeToTrace, LicenseIdentificationPipelineTrace.class));
 
-        var testEmptyTrace = LicenseIdentificationPipelineTrace.empty("some-name", algo, params);
+        var testEmptyTrace = LicenseIdentificationPipelineTrace.empty("some-name", algo, params, "license");
         var serializedEmptyTrace = mapper.writeValueAsString(testEmptyTrace);
         System.out.println(serializedEmptyTrace);
 
