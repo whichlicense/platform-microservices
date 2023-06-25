@@ -7,7 +7,10 @@
 package app.whichlicense.service.stellar;
 
 import app.whichlicense.service.stellar.jackson.LicenseIdentificationRequest;
+import app.whichlicense.service.stellar.jackson.PipelineStepDescription;
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipeline;
 import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
+import com.whichlicense.metadata.identification.license.pipeline.PipelineStep;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -16,12 +19,16 @@ import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.metrics.annotation.Timed;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace.ofMatchSet;
 import static com.whichlicense.metadata.identification.license.LicenseIdentifier.identifyLicenses;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.logging.Logger.getLogger;
 
 @Path("/identify")
@@ -31,6 +38,52 @@ public class LicenseIdentificationResource {
     private static final String IDENTIFY_POSTS_COUNTER_DESCRIPTION = "Counts identify POST operations";
     private static final String POSTS_TIMER_NAME = "licenseIdentification";
     private static final String POSTS_TIMER_DESCRIPTION = "Tracks all POST operations";
+
+    @SuppressWarnings("unchecked")
+    private List<PipelineStep> fromRawDescription(List<Map<String, Object>> steps) {
+        return steps.stream().<PipelineStepDescription>mapMulti((map, consumer) -> {
+            if (map.containsKey("operation")) {
+                consumer.accept(new PipelineStepDescription((String) map.get("operation"),
+                        (Map<String, Object>) map.getOrDefault("parameters", emptyMap())));
+            }
+        }).map(this::parseStepDescription).toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private PipelineStep parseStepDescription(PipelineStepDescription description) {
+        var operationParams = description.parameters();
+        return switch (description.operation()) {
+            case "remove" -> {
+                if (operationParams.containsKey("pattern")) {
+                    yield PipelineStep.remove(Pattern.compile((String) operationParams.get("pattern")));
+                } else {
+                    yield PipelineStep.remove((String) operationParams.getOrDefault("text", ""));
+                }
+            }
+            case "replace" -> {
+                if (operationParams.containsKey("pattern")) {
+                    yield PipelineStep.replace(
+                            Pattern.compile((String) operationParams.get("pattern")),
+                            (String) operationParams.getOrDefault("replacement", "")
+                    );
+                } else {
+                    yield PipelineStep.replace(
+                            (String) operationParams.getOrDefault("text", ""),
+                            (String) operationParams.getOrDefault("replacement", "")
+                    );
+                }
+            }
+            case "batch" -> {
+                if (operationParams.containsKey("steps")) {
+                    var steps = (List<Map<String, Object>>) operationParams.get("steps");
+                    yield PipelineStep.batch(fromRawDescription(steps));
+                } else {
+                    yield PipelineStep.batch(emptyList());
+                }
+            }
+            default -> throw new IllegalArgumentException("Unrecognized pipeline step description: " + description);
+        };
+    }
 
     @POST
     @Consumes(APPLICATION_JSON)
@@ -52,7 +105,9 @@ public class LicenseIdentificationResource {
 
             return ofMatchSet(request.algorithm(), params, discoveredLicenses, request.license());
         } else {
-            return null;
+            var steps = request.pipeline().steps().stream().map(this::parseStepDescription).toList();
+            return LicenseIdentificationPipeline.identifyLicenses(request.pipeline().name(),
+                    request.algorithm(), steps, request.license());
         }
     }
 }

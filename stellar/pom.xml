@@ -91,7 +91,7 @@
         <dependency>
             <groupId>com.whichlicense.identification</groupId>
             <artifactId>panama</artifactId>
-            <version>0.7.7-SNAPSHOT</version>
+            <version>0.8.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
