@@ -6,7 +6,7 @@
  */
 package app.whichlicense.service.mesh;
 
-import com.whichlicense.metadata.identification.license.LicenseMatch;
+import app.whichlicense.service.galileo.jackson.LicenseIdentificationRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -14,13 +14,12 @@ import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
 @RegisterRestClient(baseUri = "http://stellar:8080")
 public interface LicenseIdentificationResource {
     @POST
     @Path("/identify")
-    @Consumes(TEXT_PLAIN)
+    @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    LicenseMatch identify(String license);
+    String identify(LicenseIdentificationRequest request);
 }

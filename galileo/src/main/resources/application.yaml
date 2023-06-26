@@ -1,0 +1,4 @@
+server:
+  jackson:
+    mapper-modules:
+      - app.whichlicense.service.galileo.jackson.WhichLicenseIdentificationModule

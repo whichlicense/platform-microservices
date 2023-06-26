@@ -6,8 +6,10 @@
  */
 package app.whichlicense.service.galileo.simplesbom;
 
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public record SimpleSBOM(String name, String version, long identity, String declaredLicense, String declaredLicenseClass, String discoveredLicense, String discoveredLicenseClass, String type, List<String> ecosystems, String source, ZonedDateTime generated, List<SimpleDependency> directDependencies, List<SimpleDependency> transitiveDependencies) {
+public record SimpleSBOM(String name, String version, long identity, String declaredLicense, String declaredLicenseClass, String discoveredLicense, String discoveredLicenseClass, LicenseIdentificationPipelineTrace license, String type, List<String> ecosystems, String source, ZonedDateTime generated, List<SimpleDependency> directDependencies, List<SimpleDependency> transitiveDependencies) {
 }

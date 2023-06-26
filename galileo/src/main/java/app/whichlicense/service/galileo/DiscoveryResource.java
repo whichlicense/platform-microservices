@@ -7,6 +7,8 @@
 package app.whichlicense.service.galileo;
 
 import app.whichlicense.service.galileo.exceptions.UnsupportedSourceException;
+import app.whichlicense.service.galileo.jackson.LicenseIdentificationRequest;
+import app.whichlicense.service.galileo.jackson.WhichLicenseIdentificationModule;
 import app.whichlicense.service.galileo.npm.NpmPackageLock;
 import app.whichlicense.service.galileo.simplesbom.SimpleDependency;
 import app.whichlicense.service.galileo.simplesbom.SimpleSBOM;
@@ -15,8 +17,7 @@ import app.whichlicense.service.mesh.LicenseIdentificationResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.whichlicense.integration.jackson.identity.WhichLicenseIdentityModule;
-import com.whichlicense.metadata.identification.license.LicenseIdentifier;
-import com.whichlicense.metadata.identification.license.LicenseMatch;
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
 import com.whichlicense.metadata.identity.Identity;
 import com.whichlicense.metadata.seeker.MetadataMatch;
 import com.whichlicense.metadata.seeker.MetadataSeeker;
@@ -118,15 +119,25 @@ public class DiscoveryResource {
         var mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(new WhichLicenseIdentityModule());
+        mapper.registerModule(new WhichLicenseIdentificationModule());
         //mapper.configure(WRITE_ENUMS_TO_LOWERCASE, true);
 
         var licenseFileGlob = source.getFileSystem().getPathMatcher("glob:**/LICENSE");
         var lockfileGlob = source.getFileSystem().getPathMatcher("glob:**/package-lock.json");
-        Optional<LicenseMatch> discoveredLicense = Optional.empty();
+        Optional<LicenseIdentificationPipelineTrace> discoveredLicense = Optional.empty();
 
         for (var file : discoveredFiles) {
             if (licenseFileGlob.matches(file)) {
-                discoveredLicense = Optional.of(licenseIdentificationResource.identify(Files.readString(file)));
+                try {
+                    System.out.println(licenseIdentificationResource.identify(new LicenseIdentificationRequest(
+                            Files.readString(file), "gaoya", new HashMap<>(), null
+                    )));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                discoveredLicense = Optional.of(mapper.readValue(licenseIdentificationResource.identify(new LicenseIdentificationRequest(
+                        Files.readString(file), "gaoya", new HashMap<>(), null
+                )), LicenseIdentificationPipelineTrace.class));
             }
         }
 
@@ -150,9 +161,9 @@ public class DiscoveryResource {
 
                     var identity = Identity.fromHex(identityResource.generate());
                     var simpleSBOM = new SimpleSBOM(packageLock.name(), packageLock.version(), identity,
-                            packageMetadata.license().toLowerCase(), null, discoveredLicense.map(LicenseMatch::license)
-                            .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null),
-                            null, "library", List.of("npm"), source.relativize(file).toString(),
+                            packageMetadata.license().toLowerCase(), null, discoveredLicense.map(LicenseIdentificationPipelineTrace::license)
+                            .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null), null,
+                            discoveredLicense.get(), "library", List.of("npm"), source.relativize(file).toString(),
                             now().atZone(UTC), partitionedDependencies.get(true), partitionedDependencies.get(false));
 
                     return simpleSBOM;
