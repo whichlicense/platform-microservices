@@ -13,14 +13,20 @@ public class Cache {
             Set<String> ecosystems
     ) {
     }
+    record ContextualComplianceDetails(
+            String kind,
+            String status,
+            String explanation
+    ) {
+    }
     record ContextualDependencyDetails(
             String locator,
             String source,
             String path,
             String declaredLicense,
-            String declaredLicenseComplianceStatus,
+            Set<ContextualComplianceDetails> declaredLicenseComplianceStatuses,
             String discoveredLicense,
-            String discoveredLicenseComplianceStatus,
+            Set<ContextualComplianceDetails> discoveredLicenseComplianceStatuses,
             Map<String, String> dependencies
     ) {
     }
@@ -43,9 +49,9 @@ public class Cache {
                 "https://github.com/some/placeholder/...",
                 "package.json",
                 "mit",
-                "compliant",
+                Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit",
-                "compliant",
+                Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 Map.of(
                         "babel-1", "2.5.1",
                         "babel-ext-3", "1.2.5"
@@ -56,9 +62,9 @@ public class Cache {
                 "https://github.com/some/placeholder/...",
                 "package.json",
                 "mit",
-                "compliant",
+                Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit-v6",
-                "not-compliant",
+                Set.of(new ContextualComplianceDetails("mixed", "compliant", "...")),
                 Map.of(
                         "babel-1", "2.5.1",
                         "babel-ext-3", "1.2.7"
@@ -69,9 +75,9 @@ public class Cache {
                 "https://github.com/some/placeholder/...",
                 "package.json",
                 "mit",
-                "compliant",
+                Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit-v6",
-                "not-compliant",
+                Set.of(new ContextualComplianceDetails("mixed", "compliant", "...2...")),
                 Map.of(
                         "babel-1", "2.5.1",
                         "babel-ext-3", "1.2.7"

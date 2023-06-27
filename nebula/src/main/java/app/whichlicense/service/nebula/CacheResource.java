@@ -1,5 +1,6 @@
 package app.whichlicense.service.nebula;
 
+import app.whichlicense.service.nebula.Cache.ContextualComplianceDetails;
 import app.whichlicense.service.nebula.Cache.ContextualDependencyDetails;
 import com.whichlicense.metadata.identity.Identity;
 import jakarta.enterprise.context.RequestScoped;
@@ -12,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.whichlicense.metadata.identity.Identity.fromHex;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.*;
@@ -51,6 +53,31 @@ public class CacheResource {
                 ).collect(toMap(Entry::getKey, Entry::getValue));
     }
 
+    private Map<String, Map<String, Set<SharedDependencyComplianceTail>>> groupCompliance(
+            Map<Long, ContextualDependencyDetails> entries,
+            Function<? super ContextualDependencyDetails, ? extends Set<ContextualComplianceDetails>> classifier
+    ) {
+        return entries.entrySet().stream()
+                .<Entry<ContextualComplianceDetails, Long>>mapMulti((e, consumer) ->
+                        classifier.apply(e.getValue()).forEach(d ->
+                                consumer.accept(Map.entry(d, e.getKey()))))
+                .collect(groupingBy(e -> e.getKey().kind()))
+                .entrySet().stream()
+                .map(e -> Map.entry(e.getKey(), e.getValue().stream()
+                        .collect(groupingBy((Entry<ContextualComplianceDetails, Long> e2) -> e2.getKey().status()))
+                        .entrySet().stream()
+                        .map(e3 -> Map.entry(e3.getKey(), e3.getValue().stream()
+                                .collect(groupingBy((Entry<ContextualComplianceDetails, Long> e4) -> e4.getKey().explanation()))
+                                .entrySet().stream()
+                                .map(e5 -> new SharedDependencyComplianceTail(e5.getKey(), e5.getValue().stream()
+                                        .map(Entry::getValue)
+                                        .map(Identity::toHex)
+                                        .collect(toSet())))
+                                .collect(toSet())))
+                        .collect(toMap(Entry::getKey, Entry::getValue))))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
     private Map<String, Set<SharedDependencyReferenceTail>> groupDependencies(
             Map<Long, ContextualDependencyDetails> entries
     ) {
@@ -72,7 +99,7 @@ public class CacheResource {
                                 .flatMap(e3 -> e3.getValue().stream()).map(Identity::toHex)
                                 .collect(toSet())))
                         .collect(toSet())))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
     private SharedDependency lookup(DependencyIdentifier identifier) {
@@ -96,9 +123,9 @@ public class CacheResource {
                 groupToSet(contextual, d -> new DependencySourceGroup(d.locator(), d.source(), d.path()),
                         (g, ids) -> new SharedDependencySource(g.locator, g.source, g.path, ids)),
                 groupToMap(contextual, ContextualDependencyDetails::declaredLicense),
-                groupToMap(contextual, ContextualDependencyDetails::declaredLicenseComplianceStatus),
+                groupCompliance(contextual, ContextualDependencyDetails::declaredLicenseComplianceStatuses),
                 groupToMap(contextual, ContextualDependencyDetails::discoveredLicense),
-                groupToMap(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatus),
+                groupCompliance(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatuses),
                 groupDependencies(contextual),
                 cache.getIdentifiers().getOrDefault(identifier, emptySet()).stream()
                         .map(Identity::toHex).collect(toSet())
@@ -115,9 +142,55 @@ public class CacheResource {
     @GET
     @Path("/all")
     @Produces(APPLICATION_JSON)
-    public Set<SharedDependency> all() {
+    public Set<SharedDependency> all(@QueryParam("latest") @DefaultValue("false") boolean latest) {
         return cache.getIdentifiers().keySet().stream().map(this::lookup).collect(toSet());
     }
+
+    @GET
+    @Path("/scan")
+    @Produces(APPLICATION_JSON)
+    public ScanDependency scan(String identity) {
+        if (!cache.getContextual().containsKey(fromHex(identity))) {
+            throw new NoSuchElementException("No entry found for: " + identity);
+        }
+
+        var identifier = cache.getIdentifiers().entrySet().stream()
+                .filter(e -> e.getValue().contains(fromHex(identity)))
+                .map(Entry::getKey).findFirst().orElse(null);
+
+        if (!cache.getUniversal().containsKey(identifier)) {
+            throw new NoSuchElementException("No entry found for: " + identifier);
+        }
+
+        var universal = cache.getUniversal().get(identifier);
+        var contextual = cache.getContextual().get(fromHex(identity));
+
+        return new ScanDependency(
+                identifier.name(),
+                identifier.version(),
+                universal.type(),
+                universal.ecosystems(),
+                new ScanDependencySource(contextual.locator(), contextual.locator(), contextual.path()),
+                contextual.declaredLicense(),
+                contextual.declaredLicenseComplianceStatuses().stream()
+                        .collect(groupingBy(ContextualComplianceDetails::kind))
+                        .entrySet().stream()
+                        .map(e -> Map.entry(e.getKey(), e.getValue().stream()
+                                .map(e2 -> Map.entry(e2.status(), e2.explanation()))
+                                .collect(toMap(Entry::getKey, Entry::getValue))))
+                        .collect(toMap(Entry::getKey, Entry::getValue)),
+                contextual.discoveredLicense(),
+                contextual.discoveredLicenseComplianceStatuses().stream()
+                        .collect(groupingBy(ContextualComplianceDetails::kind))
+                        .entrySet().stream()
+                        .map(e -> Map.entry(e.getKey(), e.getValue().stream()
+                                .map(e2 -> Map.entry(e2.status(), e2.explanation()))
+                                .collect(toMap(Entry::getKey, Entry::getValue))))
+                        .collect(toMap(Entry::getKey, Entry::getValue)),
+                contextual.dependencies()
+        );
+    }
+
 
     public record SharedDependency(
             String name,
@@ -126,9 +199,9 @@ public class CacheResource {
             Set<String> ecosystems,
             Set<SharedDependencySource> sources,
             Map<String, Set<String>> declaredLicenses,
-            Map<String, Set<String>> declaredLicenseComplianceStatuses,
+            Map<String, Map<String, Set<SharedDependencyComplianceTail>>> declaredLicenseComplianceStatuses,
             Map<String, Set<String>> discoveredLicenses,
-            Map<String, Set<String>> discoveredLicenseComplianceStatuses,
+            Map<String, Map<String, Set<SharedDependencyComplianceTail>>> discoveredLicenseComplianceStatuses,
             Map<String, Set<SharedDependencyReferenceTail>> dependencies,
             Set<String> scans
     ) {
@@ -137,6 +210,26 @@ public class CacheResource {
     public record SharedDependencySource(String locator, String source, String path, Set<String> scans) {
     }
 
+    public record SharedDependencyComplianceTail(String explanation, Set<String> scans) {
+    }
+
     public record SharedDependencyReferenceTail(String version, Set<String> scans) {
+    }
+
+    public record ScanDependency(
+            String name,
+            String version,
+            String type,
+            Set<String> ecosystems,
+            ScanDependencySource source,
+            String declaredLicense,
+            Map<String, Map<String, String>> declaredLicenseComplianceStatuses,
+            String discoveredLicense,
+            Map<String, Map<String, String>> discoveredLicenseComplianceStatuses,
+            Map<String, String> dependencies
+    ) {
+    }
+
+    public record ScanDependencySource(String locator, String source, String path) {
     }
 }
