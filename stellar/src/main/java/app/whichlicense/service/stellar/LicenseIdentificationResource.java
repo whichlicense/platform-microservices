@@ -107,7 +107,7 @@ public class LicenseIdentificationResource {
         } else {
             var steps = request.pipeline().steps().stream().map(this::parseStepDescription).toList();
             return LicenseIdentificationPipeline.identifyLicenses(request.pipeline().name(),
-                    request.algorithm(), steps, request.license());
+                    request.algorithm(), steps, request.pipeline().threshold(), request.license());
         }
     }
 }

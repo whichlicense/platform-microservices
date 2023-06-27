@@ -9,5 +9,5 @@ package app.whichlicense.service.stellar.jackson;
 import java.util.List;
 import java.util.Map;
 
-public record PipelineDescription(String name, List<PipelineStepDescription> steps) {
+public record PipelineDescription(String name, float threshold, List<PipelineStepDescription> steps) {
 }
