@@ -75,16 +75,13 @@ public class CacheResource {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 
-    @GET
-    @Path("/dependency")
-    @Produces(APPLICATION_JSON)
-    public SharedDependency endpoint(DependencyIdentifier reference) {
-        if (!cache.getIdentifiers().containsKey(reference)) {
-            throw new NoSuchElementException("No entry found for: " + reference);
+    private SharedDependency lookup(DependencyIdentifier identifier) {
+        if (!cache.getIdentifiers().containsKey(identifier)) {
+            throw new NoSuchElementException("No entry found for: " + identifier);
         }
 
-        var universal = cache.getUniversal().get(reference);
-        var contextual = cache.getIdentifiers().getOrDefault(reference, emptySet())
+        var universal = cache.getUniversal().get(identifier);
+        var contextual = cache.getIdentifiers().getOrDefault(identifier, emptySet())
                 .stream().map(id -> Map.entry(id, cache.getContextual().get(id)))
                 .collect(toMap(Entry::getKey, Entry::getValue));
 
@@ -92,8 +89,8 @@ public class CacheResource {
         }
 
         return new SharedDependency(
-                reference.identifier(),
-                reference.version(),
+                identifier.name(),
+                identifier.version(),
                 universal.type(),
                 universal.ecosystems(),
                 groupToSet(contextual, d -> new DependencySourceGroup(d.locator(), d.source(), d.path()),
@@ -103,9 +100,23 @@ public class CacheResource {
                 groupToMap(contextual, ContextualDependencyDetails::discoveredLicense),
                 groupToMap(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatus),
                 groupDependencies(contextual),
-                cache.getIdentifiers().getOrDefault(reference, emptySet()).stream()
+                cache.getIdentifiers().getOrDefault(identifier, emptySet()).stream()
                         .map(Identity::toHex).collect(toSet())
         );
+    }
+
+    @GET
+    @Path("/dependency")
+    @Produces(APPLICATION_JSON)
+    public SharedDependency dependency(DependencyIdentifier identifier) {
+        return lookup(identifier);
+    }
+
+    @GET
+    @Path("/all")
+    @Produces(APPLICATION_JSON)
+    public Set<SharedDependency> all() {
+        return cache.getIdentifiers().keySet().stream().map(this::lookup).collect(toSet());
     }
 
     public record SharedDependency(

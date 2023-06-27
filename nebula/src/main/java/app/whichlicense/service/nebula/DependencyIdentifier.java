@@ -1,4 +1,4 @@
 package app.whichlicense.service.nebula;
 
-public record DependencyIdentifier(String identifier, String version) {
+public record DependencyIdentifier(String name, String version) {
 }
