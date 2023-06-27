@@ -1,0 +1,7 @@
+GET http://localhost:8085/cache/dependency
+Content-Type: application/json
+
+{
+    "identifier": "placeholder",
+    "version": "1.2.3"
+}

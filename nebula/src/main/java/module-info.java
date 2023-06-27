@@ -6,4 +6,7 @@
  */
 
 module whichlicense.service.nebula {
+    requires jakarta.ws.rs;
+    requires jakarta.cdi;
+    requires whichlicense.identity;
 }

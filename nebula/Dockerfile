@@ -1,4 +1,3 @@
-
 # 1st stage, build the app
 FROM maven:3.9.2-eclipse-temurin-20 as build
 
@@ -7,21 +6,24 @@ WORKDIR /helidon
 # Create a first layer to cache the "Maven World" in the local repository.
 # Incremental docker builds will always resume after that, unless you update
 # the pom
-ADD pom.xml .
-RUN mvn package -Dmaven.test.skip -Declipselink.weave.skip
+ADD pom.xml pom.xml
+RUN mvn package -Dmaven.test.skip -Declipselink.weave.skip -DskipOpenApiGenerate
 
-# Do the Maven build to create the custom Java Runtime Image
+# Do the Maven build!
 # Incremental docker builds will resume here when you change sources
 ADD src src
-# Don't generate CDS archive to work around JVM bug https://bugs.openjdk.org/browse/JDK-8274944
-RUN mvn package -Pjlink-image -DskipTests -Djlink.image.addClassDataSharingArchive=true
+RUN mvn package -DskipTests
+
 RUN echo "done!"
 
-# 2nd stage, build the final image with the JRI built in the 1st stage
-
-FROM debian:bookworm-slim
+# 2nd stage, build the runtime image
+FROM openjdk:20-jdk-slim
 WORKDIR /helidon
-COPY --from=build /helidon/target/nebula-jri ./
-ENTRYPOINT ["/bin/bash", "/helidon/bin/start"]
+
+# Copy the binary built in the 1st stage
+COPY --from=build /helidon/target/nebula.jar ./
+COPY --from=build /helidon/target/libs ./libs
+
+CMD ["java", "--enable-preview", "-jar", "nebula.jar"]
+
 EXPOSE 8080
-EXPOSE 443
