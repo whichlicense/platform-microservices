@@ -13,7 +13,7 @@
 
     <groupId>app.whichlicense.service</groupId>
     <artifactId>stellar</artifactId>
-    <version>0.8.6-SNAPSHOT</version>
+    <version>0.8.7-SNAPSHOT</version>
 
     <repositories>
         <repository>
@@ -86,12 +86,12 @@
         <dependency>
             <groupId>com.whichlicense</groupId>
             <artifactId>identification</artifactId>
-            <version>0.8.5-SNAPSHOT</version>
+            <version>0.8.7-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.whichlicense.identification</groupId>
             <artifactId>panama</artifactId>
-            <version>0.8.8-SNAPSHOT</version>
+            <version>0.8.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
