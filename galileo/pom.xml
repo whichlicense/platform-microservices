@@ -13,7 +13,7 @@
 
     <groupId>app.whichlicense.service</groupId>
     <artifactId>galileo</artifactId>
-    <version>0.8.8-SNAPSHOT</version>
+    <version>0.8.9-SNAPSHOT</version>
 
     <repositories>
         <repository>
