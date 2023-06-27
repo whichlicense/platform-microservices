@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [ spectra, galileo, stellar, meteor ]
+        service: [ spectra, galileo, stellar, meteor, nebula ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
