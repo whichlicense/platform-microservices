@@ -55,19 +55,19 @@ public class LicenseIdentificationResource {
         return switch (description.operation()) {
             case "remove" -> {
                 if (operationParams.containsKey("pattern")) {
-                    yield PipelineStep.remove(Pattern.compile((String) operationParams.get("pattern")));
+                    yield PipelineStep.removePattern((String) operationParams.get("pattern"));
                 } else {
-                    yield PipelineStep.remove((String) operationParams.getOrDefault("text", ""));
+                    yield PipelineStep.removeText((String) operationParams.getOrDefault("text", ""));
                 }
             }
             case "replace" -> {
                 if (operationParams.containsKey("pattern")) {
-                    yield PipelineStep.replace(
-                            Pattern.compile((String) operationParams.get("pattern")),
+                    yield PipelineStep.replacePattern(
+                            (String) operationParams.get("pattern"),
                             (String) operationParams.getOrDefault("replacement", "")
                     );
                 } else {
-                    yield PipelineStep.replace(
+                    yield PipelineStep.replaceText(
                             (String) operationParams.getOrDefault("text", ""),
                             (String) operationParams.getOrDefault("replacement", "")
                     );
