@@ -2,6 +2,9 @@ package app.whichlicense.service.nebula;
 
 import app.whichlicense.service.nebula.Cache.ContextualDependencyDetails;
 import app.whichlicense.service.nebula.Cache.UniversalDependencyDetails;
+import app.whichlicense.service.nebula.jackson.WhichLicenseIdentificationModule;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -30,13 +33,15 @@ public class StorageResource {
     @Consumes(APPLICATION_JSON)
     public void universal(UniversalStorageRequest request) {
         cache.getUniversal().putIfAbsent(request.identifier, request.details);
-
     }
 
     @PUT
     @Path("/contextual")
     @Consumes(APPLICATION_JSON)
-    public void contextual(ContextualStorageRequest request) {
+    public void contextual(String raw) throws JsonProcessingException {
+        var mapper = new ObjectMapper();
+        mapper.registerModule(new WhichLicenseIdentificationModule());
+        var request = mapper.readValue(raw, ContextualStorageRequest.class);
         cache.getContextual().put(fromHex(request.identity), request.details);
     }
 

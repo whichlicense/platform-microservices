@@ -10,8 +10,6 @@ import app.whichlicense.service.galileo.exceptions.UnsupportedSourceException;
 import app.whichlicense.service.galileo.jackson.LicenseIdentificationRequest;
 import app.whichlicense.service.galileo.jackson.WhichLicenseIdentificationModule;
 import app.whichlicense.service.galileo.npm.NpmPackageLock;
-import app.whichlicense.service.galileo.simplesbom.SimpleDependency;
-import app.whichlicense.service.galileo.simplesbom.SimpleSBOM;
 import app.whichlicense.service.mesh.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -41,12 +39,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static app.whichlicense.service.galileo.simplesbom.DependencyScope.COMPILE;
-import static app.whichlicense.service.galileo.simplesbom.DependencyScope.TEST;
 import static com.whichlicense.metadata.seeker.MetadataSourceType.FILE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static java.util.Collections.emptySet;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.logging.Logger.getLogger;
@@ -63,6 +61,9 @@ public class DiscoveryResource {
     private LicenseIdentificationResource licenseIdentificationResource;
     @Inject
     @RestClient
+    private StorageResource storageResource;
+    @Inject
+    @RestClient
     private ObservationResource observationResource;
 
     static Function<java.nio.file.Path, Optional<MetadataMatch>> createMatcher(String glob, MetadataSeeker seeker, java.nio.file.Path root) {
@@ -76,7 +77,7 @@ public class DiscoveryResource {
 
     @POST
     @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
+    @Produces(TEXT_PLAIN)
     public String endpoint(DiscoveryRequest request) throws IOException {
         Logger SEEKER_LOGGER = getLogger("whichlicense.seeker");
         Logger MATCHES_LOGGER = getLogger("whichlicense.matches");
@@ -151,20 +152,31 @@ public class DiscoveryResource {
                         var name = entry.getKey().substring(entry.getKey().lastIndexOf("/") + 1);
                         var metadata = entry.getValue();
                         DEPENDENCIES_LOGGER.finest("Identified dependency " + name + "#" + metadata.version());
-                        var identity = Identity.fromHex(identityResource.generate());
-                        return new SimpleDependency(name, metadata.version(), identity, metadata.license(), null, "library", metadata.dev() ? TEST : COMPILE, "npm", source.relativize(file).toString(), metadata.dependencies() == null ? Collections.emptyMap() : metadata.dependencies()); //also add the dev dependencies here in the future
+                        var identity = identityResource.generate();
+                        var identifier = new DependencyIdentifier(name, metadata.version());
+
+                        storageResource.identity(new IdentityStorageRequest(identifier, identity));
+                        storageResource.universal(new UniversalStorageRequest(identifier, new UniversalDependencyDetails("library", Set.of("npm"))));
+                        storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null, source.relativize(file).toString(),
+                                metadata.license(), emptySet(), metadata.license(), LicenseIdentificationPipelineTrace.empty("auto", "gaoya", new HashMap<>(), ""),
+                                emptySet(), metadata.dependencies() == null ? Collections.emptyMap() : metadata.dependencies())));
+
+                        return identifier;
                     }).collect(Collectors.partitioningBy(d -> directDependencyNames.contains(d.name())));
 
-                    var identity = Identity.fromHex(identityResource.generate());
-                    var simpleSBOM = new SimpleSBOM(packageLock.name(), packageLock.version(), identity,
-                            packageMetadata.license().toLowerCase(), null, discoveredLicense.map(LicenseIdentificationPipelineTrace::license)
-                            .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null), null,
-                            discoveredLicense.get(), "library", List.of("npm"), source.relativize(file).toString(),
-                            now().atZone(UTC), partitionedDependencies.get(true), partitionedDependencies.get(false));
+                    var identity = identityResource.generate();
+                    var identifier = new DependencyIdentifier(packageLock.name(), packageLock.version());
 
-                    observationResource.observeScan(new Observation(3, new ObservedScan(Identity.toHex(identity))));
+                    storageResource.identity(new IdentityStorageRequest(identifier, identity));
+                    storageResource.universal(new UniversalStorageRequest(identifier, new UniversalDependencyDetails("library", Set.of("npm"))));
+                    storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null, source.relativize(file).toString(),
+                            packageMetadata.license().toLowerCase(), emptySet(), discoveredLicense.map(LicenseIdentificationPipelineTrace::license)
+                            .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null), discoveredLicense.get(), emptySet(),
+                            partitionedDependencies.get(true).stream().map(i -> Map.entry(i.name(), i.version())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> n)))));
 
-                    return mapper.writeValueAsString(simpleSBOM);
+                    observationResource.observeScan(new Observation(3, new ObservedScan(identity)));
+
+                    return identity;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
