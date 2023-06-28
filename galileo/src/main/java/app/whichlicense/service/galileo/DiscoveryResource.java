@@ -12,8 +12,7 @@ import app.whichlicense.service.galileo.jackson.WhichLicenseIdentificationModule
 import app.whichlicense.service.galileo.npm.NpmPackageLock;
 import app.whichlicense.service.galileo.simplesbom.SimpleDependency;
 import app.whichlicense.service.galileo.simplesbom.SimpleSBOM;
-import app.whichlicense.service.mesh.IdentityResource;
-import app.whichlicense.service.mesh.LicenseIdentificationResource;
+import app.whichlicense.service.mesh.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.whichlicense.integration.jackson.identity.WhichLicenseIdentityModule;
@@ -62,6 +61,9 @@ public class DiscoveryResource {
     @Inject
     @RestClient
     private LicenseIdentificationResource licenseIdentificationResource;
+    @Inject
+    @RestClient
+    private ObservationResource observationResource;
 
     static Function<java.nio.file.Path, Optional<MetadataMatch>> createMatcher(String glob, MetadataSeeker seeker, java.nio.file.Path root) {
         var compiled = root.getFileSystem().getPathMatcher("glob:" + glob);
@@ -75,7 +77,7 @@ public class DiscoveryResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public SimpleSBOM endpoint(DiscoveryRequest request) throws IOException {
+    public String endpoint(DiscoveryRequest request) throws IOException {
         Logger SEEKER_LOGGER = getLogger("whichlicense.seeker");
         Logger MATCHES_LOGGER = getLogger("whichlicense.matches");
         Logger DISCOVERY_LOGGER = getLogger("whichlicense.discovery");
@@ -166,7 +168,9 @@ public class DiscoveryResource {
                             discoveredLicense.get(), "library", List.of("npm"), source.relativize(file).toString(),
                             now().atZone(UTC), partitionedDependencies.get(true), partitionedDependencies.get(false));
 
-                    return simpleSBOM;
+                    observationResource.observeScan(new Observation(3, new ObservedScan(Identity.toHex(identity))));
+
+                    return mapper.writeValueAsString(simpleSBOM);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -102,7 +102,7 @@ public class CacheResource {
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
-    private SharedDependency lookup(DependencyIdentifier identifier) {
+    private SharedDependency lookupDependency(DependencyIdentifier identifier) {
         if (!cache.getIdentifiers().containsKey(identifier)) {
             throw new NoSuchElementException("No entry found for: " + identifier);
         }
@@ -136,20 +136,17 @@ public class CacheResource {
     @Path("/dependency")
     @Produces(APPLICATION_JSON)
     public SharedDependency dependency(DependencyIdentifier identifier) {
-        return lookup(identifier);
+        return lookupDependency(identifier);
     }
 
     @GET
     @Path("/all")
     @Produces(APPLICATION_JSON)
     public Set<SharedDependency> all(@QueryParam("latest") @DefaultValue("false") boolean latest) {
-        return cache.getIdentifiers().keySet().stream().map(this::lookup).collect(toSet());
+        return cache.getIdentifiers().keySet().stream().map(this::lookupDependency).collect(toSet());
     }
 
-    @GET
-    @Path("/scan")
-    @Produces(APPLICATION_JSON)
-    public ScanDependency scan(String identity) {
+    private ScanDependency lookupScan(String identity) {
         if (!cache.getContextual().containsKey(fromHex(identity))) {
             throw new NoSuchElementException("No entry found for: " + identity);
         }
@@ -169,6 +166,7 @@ public class CacheResource {
                 identifier.name(),
                 identifier.version(),
                 universal.type(),
+                identity,
                 universal.ecosystems(),
                 new ScanDependencySource(contextual.locator(), contextual.locator(), contextual.path()),
                 contextual.declaredLicense(),
@@ -191,6 +189,20 @@ public class CacheResource {
         );
     }
 
+    @GET
+    @Path("/scan")
+    @Produces(APPLICATION_JSON)
+    public ScanDependency scan(String identity) {
+        return lookupScan(identity);
+    }
+
+    @GET
+    @Path("/scans")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    public Set<ScanDependency> scans(List<String> identities) {
+        return identities.stream().map(this::lookupScan).collect(toSet());
+    }
 
     public record SharedDependency(
             String name,
@@ -220,6 +232,7 @@ public class CacheResource {
             String name,
             String version,
             String type,
+            String identity,
             Set<String> ecosystems,
             ScanDependencySource source,
             String declaredLicense,
