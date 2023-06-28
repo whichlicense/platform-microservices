@@ -38,8 +38,10 @@ public class InteractionObservationResource {
     public Response endpoint(Observation observation) throws IOException {
         var objectMapper = new ObjectMapper();
         var session = interactionResource.getSession();
-        var json = objectMapper.writeValueAsString(observation);
-        session.getAsyncRemote().sendText(json);
+        if (session != null) {
+            var json = objectMapper.writeValueAsString(observation);
+            session.getAsyncRemote().sendText(json);
+        }
         return Response.ok().build();
     }
 }

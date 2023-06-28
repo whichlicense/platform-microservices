@@ -1,0 +1,4 @@
+GET http://localhost:8085/cache/scan
+Content-Type: application/json
+
+["a08f9"]
