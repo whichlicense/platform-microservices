@@ -6,7 +6,10 @@
  */
 package app.whichlicense.service.galileo;
 
-import java.net.URL;
+import app.whichlicense.service.galileo.jackson.PipelineDescription;
 
-public record DiscoveryRequest(URL url) {
+import java.net.URL;
+import java.util.Map;
+
+public record DiscoveryRequest(URL url, String algorithm, Map<String, Object> parameters, PipelineDescription pipeline) {
 }

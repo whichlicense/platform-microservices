@@ -22,7 +22,6 @@ import org.eclipse.microprofile.metrics.annotation.Timed;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace.ofMatchSet;
 import static com.whichlicense.metadata.identification.license.LicenseIdentifier.identifyLicenses;

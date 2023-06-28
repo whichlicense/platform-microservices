@@ -130,15 +130,9 @@ public class DiscoveryResource {
 
         for (var file : discoveredFiles) {
             if (licenseFileGlob.matches(file)) {
-                try {
-                    System.out.println(licenseIdentificationResource.identify(new LicenseIdentificationRequest(
-                            Files.readString(file), "gaoya", new HashMap<>(), null
-                    )));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
                 discoveredLicense = Optional.of(mapper.readValue(licenseIdentificationResource.identify(new LicenseIdentificationRequest(
-                        Files.readString(file), "gaoya", new HashMap<>(), null
+                        Files.readString(file), request.algorithm() == null ? "gaoya" : request.algorithm(),
+                        request.parameters() == null ? new HashMap<>() : request.parameters(), request.pipeline()
                 )), LicenseIdentificationPipelineTrace.class));
             }
         }
@@ -176,6 +170,6 @@ public class DiscoveryResource {
                 }
             }
         }
-        throw new IllegalStateException("Test");
+        throw new IllegalStateException("No primary metadata source found");
     }
 }
