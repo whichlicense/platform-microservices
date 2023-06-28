@@ -2,6 +2,7 @@ package app.whichlicense.service.nebula;
 
 import app.whichlicense.service.nebula.Cache.ContextualComplianceDetails;
 import app.whichlicense.service.nebula.Cache.ContextualDependencyDetails;
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
 import com.whichlicense.metadata.identity.Identity;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -178,6 +179,7 @@ public class CacheResource {
                                 .collect(toMap(Entry::getKey, Entry::getValue))))
                         .collect(toMap(Entry::getKey, Entry::getValue)),
                 contextual.discoveredLicense(),
+                contextual.discoveredLicenseTrace(),
                 contextual.discoveredLicenseComplianceStatuses().stream()
                         .collect(groupingBy(ContextualComplianceDetails::kind))
                         .entrySet().stream()
@@ -238,6 +240,7 @@ public class CacheResource {
             String declaredLicense,
             Map<String, Map<String, String>> declaredLicenseComplianceStatuses,
             String discoveredLicense,
+            LicenseIdentificationPipelineTrace discoveredLicenseTrace,
             Map<String, Map<String, String>> discoveredLicenseComplianceStatuses,
             Map<String, String> dependencies
     ) {

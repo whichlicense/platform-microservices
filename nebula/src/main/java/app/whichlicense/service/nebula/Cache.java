@@ -1,7 +1,9 @@
 package app.whichlicense.service.nebula;
 
+import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +28,7 @@ public class Cache {
             String declaredLicense,
             Set<ContextualComplianceDetails> declaredLicenseComplianceStatuses,
             String discoveredLicense,
+            LicenseIdentificationPipelineTrace discoveredLicenseTrace,
             Set<ContextualComplianceDetails> discoveredLicenseComplianceStatuses,
             Map<String, String> dependencies
     ) {
@@ -51,6 +54,7 @@ public class Cache {
                 "mit",
                 Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit",
+                LicenseIdentificationPipelineTrace.empty("p0", "gaoya", new HashMap<>(), ""),
                 Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 Map.of(
                         "babel-1", "2.5.1",
@@ -64,6 +68,7 @@ public class Cache {
                 "mit",
                 Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit-v6",
+                LicenseIdentificationPipelineTrace.empty("p0", "gaoya", new HashMap<>(), ""),
                 Set.of(new ContextualComplianceDetails("mixed", "compliant", "...")),
                 Map.of(
                         "babel-1", "2.5.1",
@@ -77,6 +82,7 @@ public class Cache {
                 "mit",
                 Set.of(new ContextualComplianceDetails("osadl", "compliant", "...")),
                 "mit-v6",
+                LicenseIdentificationPipelineTrace.empty("p0", "gaoya", new HashMap<>(), ""),
                 Set.of(new ContextualComplianceDetails("mixed", "compliant", "...2...")),
                 Map.of(
                         "babel-1", "2.5.1",
