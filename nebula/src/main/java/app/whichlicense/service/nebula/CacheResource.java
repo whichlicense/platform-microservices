@@ -45,6 +45,7 @@ public class CacheResource {
             Function<? super ContextualDependencyDetails, ? extends String> classifier
     ) {
         return entries.entrySet().stream()
+                .filter(e -> !Objects.isNull(classifier.apply(e.getValue())))
                 .collect(groupingBy(e -> classifier.apply(e.getValue())))
                 .entrySet().stream()
                 .map(e -> Map.entry(e.getKey(), e.getValue().stream()
