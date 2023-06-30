@@ -44,6 +44,22 @@ public class Cache {
     ) {
     }
 
+    enum DependencyKind {
+        DIRECT, TRANSITIVE
+    }
+
+    enum VersionType {
+        SINGLE, RANGE
+    }
+
+    record ContextualNestedDependencyDetails(
+            String version,
+            VersionType type,
+            DependencyKind kind,
+            Map<String, String> scans
+    ) {
+    }
+
     record ContextualDependencyDetails(
             String locator,
             String source,
@@ -53,7 +69,7 @@ public class Cache {
             String discoveredLicense,
             LicenseIdentificationPipelineTrace discoveredLicenseTrace,
             Set<ContextualComplianceDetails> discoveredLicenseComplianceStatuses,
-            Map<String, String> dependencies
+            Map<String, ContextualNestedDependencyDetails> dependencies
     ) {
     }
 }

@@ -1,7 +1,6 @@
 package app.whichlicense.service.nebula;
 
-import app.whichlicense.service.nebula.Cache.ContextualComplianceDetails;
-import app.whichlicense.service.nebula.Cache.ContextualDependencyDetails;
+import app.whichlicense.service.nebula.Cache.*;
 import com.whichlicense.metadata.identification.license.LicenseIdentificationPipelineTrace;
 import com.whichlicense.metadata.identity.Identity;
 import jakarta.enterprise.context.RequestScoped;
@@ -81,10 +80,11 @@ public class CacheResource {
     }
 
     private Map<String, Set<SharedDependencyReferenceTail>> groupDependencies(
-            Map<Long, ContextualDependencyDetails> entries
+            Map<Long, ContextualDependencyDetails> entries,
+            boolean transitive
     ) {
         return entries.entrySet().stream()
-                .<Entry<Entry<String, String>, Long>>mapMulti((e, consumer) ->
+                .<Entry<Entry<String, ContextualNestedDependencyDetails>, Long>>mapMulti((e, consumer) ->
                         e.getValue().dependencies().entrySet().forEach(d ->
                                 consumer.accept(Map.entry(d, e.getKey()))))
                 .collect(groupingBy(Entry::getKey))
@@ -97,9 +97,17 @@ public class CacheResource {
                         .map(e2 -> Map.entry(e2.getKey().getValue(), e2.getValue()))
                         .collect(groupingBy(Entry::getKey))))
                 .map(e -> Map.entry(e.getKey(), e.getValue().entrySet().stream()
-                        .map(e2 -> new SharedDependencyReferenceTail(e2.getKey(), e2.getValue().stream()
-                                .flatMap(e3 -> e3.getValue().stream()).map(Identity::toHex)
-                                .collect(toSet())))
+                        .map(e2 -> new SharedDependencyReferenceTail(e2.getKey().version(), e2.getKey().type(), e2.getKey().kind(),
+                                e2.getValue().stream()
+                                        .flatMap(e3 -> e3.getKey().scans().entrySet().stream())
+                                        .collect(groupingBy(Entry::getKey)).entrySet().stream()
+                                        .map(e5 -> Map.entry(e5.getKey(), e5.getValue().stream()
+                                                .map(Entry::getValue).collect(toSet())))
+                                        .collect(toMap(Entry::getKey, Entry::getValue)),
+                                e2.getValue().stream()
+                                        .flatMap(e3 -> e3.getValue().stream())
+                                        .map(Identity::toHex)
+                                        .collect(toSet())))
                         .collect(toSet())))
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
@@ -128,7 +136,7 @@ public class CacheResource {
                 groupCompliance(contextual, ContextualDependencyDetails::declaredLicenseComplianceStatuses),
                 groupToMap(contextual, ContextualDependencyDetails::discoveredLicense),
                 groupCompliance(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatuses),
-                groupDependencies(contextual),
+                groupDependencies(contextual, false),
                 cache.getIdentifiers().getOrDefault(identifier, emptySet()).stream()
                         .map(Identity::toHex).collect(toSet())
         );
@@ -137,14 +145,14 @@ public class CacheResource {
     @GET
     @Path("/dependency")
     @Produces(APPLICATION_JSON)
-    public SharedDependency dependency(DependencyIdentifier identifier) {
+    public SharedDependency dependency(DependencyIdentifier identifier, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
         return lookupDependency(identifier);
     }
 
     @GET
     @Path("/all")
     @Produces(APPLICATION_JSON)
-    public Set<SharedDependency> all(@QueryParam("latest") @DefaultValue("false") boolean latest) {
+    public Set<SharedDependency> all(@QueryParam("latest") @DefaultValue("false") boolean latest, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
         return cache.getIdentifiers().keySet().stream().map(this::lookupDependency).collect(toSet());
     }
 
@@ -195,7 +203,7 @@ public class CacheResource {
     @GET
     @Path("/scan")
     @Produces(APPLICATION_JSON)
-    public ScanDependency scan(String identity) {
+    public ScanDependency scan(String identity, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
         return lookupScan(identity);
     }
 
@@ -203,7 +211,7 @@ public class CacheResource {
     @Path("/scans")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    public Set<ScanDependency> scans(List<String> identities) {
+    public Set<ScanDependency> scans(List<String> identities, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
         return identities.stream().map(this::lookupScan).collect(toSet());
     }
 
@@ -228,7 +236,8 @@ public class CacheResource {
     public record SharedDependencyComplianceTail(String explanation, Set<String> scans) {
     }
 
-    public record SharedDependencyReferenceTail(String version, Set<String> scans) {
+    public record SharedDependencyReferenceTail(String version, VersionType type, DependencyKind kind,
+                                                Map<String, Set<String>> versions, Set<String> scans) {
     }
 
     public record ScanDependency(
@@ -243,7 +252,7 @@ public class CacheResource {
             String discoveredLicense,
             LicenseIdentificationPipelineTrace discoveredLicenseTrace,
             Map<String, Map<String, String>> discoveredLicenseComplianceStatuses,
-            Map<String, String> dependencies
+            Map<String, ContextualNestedDependencyDetails> dependencies
     ) {
     }
 

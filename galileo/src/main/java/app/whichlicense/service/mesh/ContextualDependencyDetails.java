@@ -14,6 +14,6 @@ public record ContextualDependencyDetails(
         String discoveredLicense,
         LicenseIdentificationPipelineTrace discoveredLicenseTrace,
         Set<ContextualComplianceDetails> discoveredLicenseComplianceStatuses,
-        Map<String, String> dependencies
+        Map<String, ContextualNestedDependencyDetails> dependencies
 ) {
 }

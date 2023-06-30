@@ -33,12 +33,18 @@ import java.nio.file.Files;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static app.whichlicense.service.mesh.DependencyKind.DIRECT;
+import static app.whichlicense.service.mesh.DependencyKind.TRANSITIVE;
+import static app.whichlicense.service.mesh.VersionType.RANGE;
+import static app.whichlicense.service.mesh.VersionType.SINGLE;
 import static com.whichlicense.metadata.seeker.MetadataSourceType.FILE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -73,6 +79,26 @@ public class DiscoveryResource {
 
     static Stream<Function<java.nio.file.Path, Optional<MetadataMatch>>> createMatchers(MetadataSeeker seeker, java.nio.file.Path root) {
         return seeker.globs().stream().map(glob -> createMatcher(glob, seeker, root));
+    }
+
+    private static final Pattern VALID_SEMVER = Pattern.compile("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$");
+
+    static Map<String, ContextualNestedDependencyDetails> mapNestedDependencies(Map<String, String> dependencies, Set<String> direct) {
+        return dependencies.entrySet().stream()
+                .map(d -> Map.entry(d.getKey(), new ContextualNestedDependencyDetails(d.getValue(),
+                        VALID_SEMVER.matcher(d.getValue()).matches() ? SINGLE : RANGE,
+                        direct.contains(d.getValue()) ? DIRECT : TRANSITIVE, new HashMap<>())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (o, n) -> n));
+    }
+
+    static Map<String, ContextualNestedDependencyDetails> mapNestedDependencies(Map<Boolean, List<Entry<String, DependencyIdentifier>>> dependencies) {
+        return Stream.concat(dependencies.get(true).stream().map(e -> Map.entry(true, e)),
+                dependencies.get(false).stream().map(e -> Map.entry(false, e)))
+                .map(e -> Map.entry(e.getValue().getValue().name(),
+                        new ContextualNestedDependencyDetails(e.getValue().getValue().version(),
+                                VALID_SEMVER.matcher(e.getValue().getValue().version()).matches() ? SINGLE : RANGE,
+                                e.getKey() ? DIRECT : TRANSITIVE, Map.of(e.getValue().getValue().version(), e.getValue().getKey())
+                ))).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (o, n) -> n));
     }
 
     @POST
@@ -157,22 +183,24 @@ public class DiscoveryResource {
 
                         storageResource.identity(new IdentityStorageRequest(identifier, identity));
                         storageResource.universal(new UniversalStorageRequest(identifier, new UniversalDependencyDetails("library", Set.of("npm"))));
-                        storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null, source.relativize(file).toString(),
-                                metadata.license(), emptySet(), metadata.license(), LicenseIdentificationPipelineTrace.empty("auto", "gaoya", new HashMap<>(), ""),
-                                emptySet(), metadata.dependencies() == null ? Collections.emptyMap() : metadata.dependencies())));
+                        storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null,
+                                source.relativize(file).toString(), metadata.license(), emptySet(), metadata.license(), LicenseIdentificationPipelineTrace.
+                                empty("auto", "gaoya", new HashMap<>(), ""), emptySet(), metadata.dependencies() == null
+                                ? Collections.emptyMap() : mapNestedDependencies(metadata.dependencies(), directDependencyNames))));
 
-                        return identifier;
-                    }).collect(Collectors.partitioningBy(d -> directDependencyNames.contains(d.name())));
+                        return Map.entry(identity, identifier);
+                    }).collect(Collectors.partitioningBy(d -> directDependencyNames.contains(d.getValue().name())));
 
                     var identity = identityResource.generate();
                     var identifier = new DependencyIdentifier(packageLock.name(), packageLock.version());
 
                     storageResource.identity(new IdentityStorageRequest(identifier, identity));
                     storageResource.universal(new UniversalStorageRequest(identifier, new UniversalDependencyDetails("library", Set.of("npm"))));
-                    storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null, source.relativize(file).toString(),
-                            packageMetadata.license().toLowerCase(), emptySet(), discoveredLicense.map(LicenseIdentificationPipelineTrace::license)
-                            .map(l -> l.replaceFirst(".LICENSE", "").toLowerCase()).orElse(null), discoveredLicense.get(), emptySet(),
-                            partitionedDependencies.get(true).stream().map(i -> Map.entry(i.name(), i.version())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> n)))));
+                    storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null,
+                            source.relativize(file).toString(), packageMetadata.license().toLowerCase(), emptySet(),
+                            discoveredLicense.map(LicenseIdentificationPipelineTrace::license).map(l -> l.replaceFirst(".LICENSE", "")
+                                    .toLowerCase()).orElse(null), discoveredLicense.get(), emptySet(),
+                            mapNestedDependencies(partitionedDependencies))));
 
                     observationResource.observeScan(new Observation(3, new ObservedScan(identity)));
 
