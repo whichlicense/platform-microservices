@@ -13,6 +13,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static app.whichlicense.service.nebula.Cache.DependencyKind.DIRECT;
+import static app.whichlicense.service.nebula.Cache.DependencyKind.TRANSITIVE;
 import static com.whichlicense.metadata.identity.Identity.fromHex;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.util.Collections.emptySet;
@@ -97,6 +99,7 @@ public class CacheResource {
                         .map(e2 -> Map.entry(e2.getKey().getValue(), e2.getValue()))
                         .collect(groupingBy(Entry::getKey))))
                 .map(e -> Map.entry(e.getKey(), e.getValue().entrySet().stream()
+                        .filter(e2 -> (e2.getKey().kind() == TRANSITIVE && transitive) || e2.getKey().kind() == DIRECT)
                         .map(e2 -> new SharedDependencyReferenceTail(e2.getKey().version(), e2.getKey().type(), e2.getKey().kind(),
                                 e2.getValue().stream()
                                         .flatMap(e3 -> e3.getKey().scans().entrySet().stream())
@@ -112,99 +115,106 @@ public class CacheResource {
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
-    private SharedDependency lookupDependency(DependencyIdentifier identifier) {
-        if (!cache.getIdentifiers().containsKey(identifier)) {
-            throw new NoSuchElementException("No entry found for: " + identifier);
-        }
+    private Function<DependencyIdentifier, SharedDependency> lookupDependency(boolean transitive) {
+        return identifier -> {
+            if (!cache.getIdentifiers().containsKey(identifier)) {
+                throw new NoSuchElementException("No entry found for: " + identifier);
+            }
 
-        var universal = cache.getUniversal().get(identifier);
-        var contextual = cache.getIdentifiers().getOrDefault(identifier, emptySet())
-                .stream().map(id -> Map.entry(id, cache.getContextual().get(id)))
-                .collect(toMap(Entry::getKey, Entry::getValue));
+            var universal = cache.getUniversal().get(identifier);
+            var contextual = cache.getIdentifiers().getOrDefault(identifier, emptySet())
+                    .stream().map(id -> Map.entry(id, cache.getContextual().get(id)))
+                    .collect(toMap(Entry::getKey, Entry::getValue));
 
-        record DependencySourceGroup(String locator, String source, String path) {
-        }
+            record DependencySourceGroup(String locator, String source, String path) {
+            }
 
-        return new SharedDependency(
-                identifier.name(),
-                identifier.version(),
-                universal.type(),
-                universal.ecosystems(),
-                groupToSet(contextual, d -> new DependencySourceGroup(d.locator(), d.source(), d.path()),
-                        (g, ids) -> new SharedDependencySource(g.locator, g.source, g.path, ids)),
-                groupToMap(contextual, ContextualDependencyDetails::declaredLicense),
-                groupCompliance(contextual, ContextualDependencyDetails::declaredLicenseComplianceStatuses),
-                groupToMap(contextual, ContextualDependencyDetails::discoveredLicense),
-                groupCompliance(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatuses),
-                groupDependencies(contextual, false),
-                cache.getIdentifiers().getOrDefault(identifier, emptySet()).stream()
-                        .map(Identity::toHex).collect(toSet())
-        );
+            return new SharedDependency(
+                    identifier.name(),
+                    identifier.version(),
+                    universal.type(),
+                    universal.ecosystems(),
+                    groupToSet(contextual, d -> new DependencySourceGroup(d.locator(), d.source(), d.path()),
+                            (g, ids) -> new SharedDependencySource(g.locator, g.source, g.path, ids)),
+                    groupToMap(contextual, ContextualDependencyDetails::declaredLicense),
+                    groupCompliance(contextual, ContextualDependencyDetails::declaredLicenseComplianceStatuses),
+                    groupToMap(contextual, ContextualDependencyDetails::discoveredLicense),
+                    groupCompliance(contextual, ContextualDependencyDetails::discoveredLicenseComplianceStatuses),
+                    groupDependencies(contextual, transitive),
+                    cache.getIdentifiers().getOrDefault(identifier, emptySet()).stream()
+                            .map(Identity::toHex).collect(toSet())
+            );
+        };
     }
 
     @GET
     @Path("/dependency")
     @Produces(APPLICATION_JSON)
     public SharedDependency dependency(DependencyIdentifier identifier, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
-        return lookupDependency(identifier);
+        return lookupDependency(transitive).apply(identifier);
     }
 
     @GET
     @Path("/all")
     @Produces(APPLICATION_JSON)
     public Set<SharedDependency> all(@QueryParam("latest") @DefaultValue("false") boolean latest, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
-        return cache.getIdentifiers().keySet().stream().map(this::lookupDependency).collect(toSet());
+        return cache.getIdentifiers().keySet().stream().map(lookupDependency(transitive)).collect(toSet());
     }
 
-    private ScanDependency lookupScan(String identity) {
-        if (!cache.getContextual().containsKey(fromHex(identity))) {
-            throw new NoSuchElementException("No entry found for: " + identity);
-        }
+    private Function<String, ScanDependency> lookupScan(boolean transitive) {
+        return identity -> {
+            if (!cache.getContextual().containsKey(fromHex(identity))) {
+                throw new NoSuchElementException("No entry found for: " + identity);
+            }
 
-        var identifier = cache.getIdentifiers().entrySet().stream()
-                .filter(e -> e.getValue().contains(fromHex(identity)))
-                .map(Entry::getKey).findFirst().orElse(null);
+            var identifier = cache.getIdentifiers().entrySet().stream()
+                    .filter(e -> e.getValue().contains(fromHex(identity)))
+                    .map(Entry::getKey).findFirst().orElse(null);
 
-        if (!cache.getUniversal().containsKey(identifier)) {
-            throw new NoSuchElementException("No entry found for: " + identifier);
-        }
+            if (!cache.getUniversal().containsKey(identifier)) {
+                throw new NoSuchElementException("No entry found for: " + identifier);
+            }
 
-        var universal = cache.getUniversal().get(identifier);
-        var contextual = cache.getContextual().get(fromHex(identity));
+            var universal = cache.getUniversal().get(identifier);
+            var contextual = cache.getContextual().get(fromHex(identity));
 
-        return new ScanDependency(
-                identifier.name(),
-                identifier.version(),
-                universal.type(),
-                identity,
-                universal.ecosystems(),
-                new ScanDependencySource(contextual.locator(), contextual.locator(), contextual.path()),
-                contextual.declaredLicense(),
-                contextual.declaredLicenseComplianceStatuses().stream()
-                        .collect(groupingBy(ContextualComplianceDetails::kind))
-                        .entrySet().stream()
-                        .map(e -> Map.entry(e.getKey(), e.getValue().stream()
-                                .map(e2 -> Map.entry(e2.status(), e2.explanation()))
-                                .collect(toMap(Entry::getKey, Entry::getValue))))
-                        .collect(toMap(Entry::getKey, Entry::getValue)),
-                contextual.discoveredLicense(),
-                contextual.discoveredLicenseTrace(),
-                contextual.discoveredLicenseComplianceStatuses().stream()
-                        .collect(groupingBy(ContextualComplianceDetails::kind))
-                        .entrySet().stream()
-                        .map(e -> Map.entry(e.getKey(), e.getValue().stream()
-                                .map(e2 -> Map.entry(e2.status(), e2.explanation()))
-                                .collect(toMap(Entry::getKey, Entry::getValue))))
-                        .collect(toMap(Entry::getKey, Entry::getValue)),
-                contextual.dependencies()
-        );
+            return new ScanDependency(
+                    identifier.name(),
+                    identifier.version(),
+                    universal.type(),
+                    identity,
+                    universal.ecosystems(),
+                    new ScanDependencySource(contextual.locator(), contextual.locator(), contextual.path()),
+                    contextual.declaredLicense(),
+                    contextual.declaredLicenseComplianceStatuses().stream()
+                            .collect(groupingBy(ContextualComplianceDetails::kind))
+                            .entrySet().stream()
+                            .map(e -> Map.entry(e.getKey(), e.getValue().stream()
+                                    .map(e2 -> Map.entry(e2.status(), e2.explanation()))
+                                    .collect(toMap(Entry::getKey, Entry::getValue))))
+                            .collect(toMap(Entry::getKey, Entry::getValue)),
+                    contextual.discoveredLicense(),
+                    contextual.discoveredLicenseTrace(),
+                    contextual.discoveredLicenseComplianceStatuses().stream()
+                            .collect(groupingBy(ContextualComplianceDetails::kind))
+                            .entrySet().stream()
+                            .map(e -> Map.entry(e.getKey(), e.getValue().stream()
+                                    .map(e2 -> Map.entry(e2.status(), e2.explanation()))
+                                    .collect(toMap(Entry::getKey, Entry::getValue))))
+                            .collect(toMap(Entry::getKey, Entry::getValue)),
+                    contextual.dependencies().entrySet().stream()
+                            .filter(e -> (e.getValue().kind() == TRANSITIVE && transitive)
+                                    || e.getValue().kind() == DIRECT)
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue))
+            );
+        };
     }
 
     @GET
     @Path("/scan")
     @Produces(APPLICATION_JSON)
     public ScanDependency scan(String identity, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
-        return lookupScan(identity);
+        return lookupScan(transitive).apply(identity);
     }
 
     @GET
@@ -212,7 +222,7 @@ public class CacheResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     public Set<ScanDependency> scans(List<String> identities, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
-        return identities.stream().map(this::lookupScan).collect(toSet());
+        return identities.stream().map(lookupScan(transitive)).collect(toSet());
     }
 
     public record SharedDependency(
