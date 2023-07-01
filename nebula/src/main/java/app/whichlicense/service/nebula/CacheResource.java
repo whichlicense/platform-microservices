@@ -147,7 +147,7 @@ public class CacheResource {
         };
     }
 
-    @GET
+    @POST
     @Path("/dependency")
     @Produces(APPLICATION_JSON)
     public SharedDependency dependency(DependencyIdentifier identifier, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
@@ -210,14 +210,14 @@ public class CacheResource {
         };
     }
 
-    @GET
+    @POST
     @Path("/scan")
     @Produces(APPLICATION_JSON)
     public ScanDependency scan(String identity, @QueryParam("transitive") @DefaultValue("false") boolean transitive) {
         return lookupScan(transitive).apply(identity);
     }
 
-    @GET
+    @POST
     @Path("/scans")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)

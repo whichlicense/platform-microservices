@@ -1,4 +1,4 @@
-GET http://localhost:8085/cache/scans
+POST http://localhost:8085/cache/scans?transitive=true
 Content-Type: application/json
 
-["d52282ed8000ec"]
+["d737ead98000f6"]

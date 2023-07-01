@@ -1,7 +1,7 @@
-GET http://localhost:8085/cache/dependency
+POST http://localhost:8085/cache/dependency
 Content-Type: application/json
 
 {
-    "name": "placeholder",
-    "version": "1.2.3"
+    "name": "cloud-native-frontend",
+    "version": "0.1.0"
 }

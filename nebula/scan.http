@@ -1,4 +1,4 @@
-GET http://localhost:8085/cache/scan
+POST http://localhost:8085/cache/scan
 Content-Type: text/plain
 
-d5146c648000e7
+d737ead98000f6
