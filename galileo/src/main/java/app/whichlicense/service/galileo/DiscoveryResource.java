@@ -83,11 +83,10 @@ public class DiscoveryResource {
 
     private static final Pattern VALID_SEMVER = Pattern.compile("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$");
 
-    static Map<String, ContextualNestedDependencyDetails> mapNestedDependencies(Map<String, String> dependencies, Set<String> direct) {
+    static Map<String, ContextualNestedDependencyDetails> mapDependencies(Map<String, String> dependencies) {
         return dependencies.entrySet().stream()
                 .map(d -> Map.entry(d.getKey(), new ContextualNestedDependencyDetails(d.getValue(),
-                        VALID_SEMVER.matcher(d.getValue()).matches() ? SINGLE : RANGE,
-                        direct.contains(d.getValue()) ? DIRECT : TRANSITIVE, new HashMap<>())))
+                        VALID_SEMVER.matcher(d.getValue()).matches() ? SINGLE : RANGE, DIRECT, new HashMap<>())))
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (o, n) -> n));
     }
 
@@ -186,7 +185,7 @@ public class DiscoveryResource {
                         storageResource.contextual(new ContextualStorageRequest(identity, new ContextualDependencyDetails(null, null,
                                 source.relativize(file).toString(), metadata.license(), emptySet(), metadata.license(), LicenseIdentificationPipelineTrace.
                                 empty("auto", "gaoya", new HashMap<>(), ""), emptySet(), metadata.dependencies() == null
-                                ? Collections.emptyMap() : mapNestedDependencies(metadata.dependencies(), directDependencyNames))));
+                                ? Collections.emptyMap() : mapDependencies(metadata.dependencies()))));
 
                         return Map.entry(identity, identifier);
                     }).collect(Collectors.partitioningBy(d -> directDependencyNames.contains(d.getValue().name())));

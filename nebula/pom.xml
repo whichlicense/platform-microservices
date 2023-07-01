@@ -13,7 +13,7 @@
 
     <groupId>app.whichlicense.service</groupId>
     <artifactId>nebula</artifactId>
-    <version>0.9.4-SNAPSHOT</version>
+    <version>0.9.5-SNAPSHOT</version>
 
     <repositories>
         <repository>
